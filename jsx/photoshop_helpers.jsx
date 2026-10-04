@@ -12,7 +12,11 @@ var FRT = (function () {
   function ensureCleanupLayer(name) {
     var d = doc(); name = name || "Text cleanup";
     try { return d.artLayers.getByName(name); } catch (e) {}
-    var src = d.artLayers[d.artLayers.length - 1];
+    var src = null;
+    try { src = d.artLayers.getByName("Original (AI render)"); } catch (e) {}
+    if (!src) { // Firefly docs have an empty "Layer 0" under the image: take the lowest layer that has pixels
+      for (var i = d.artLayers.length - 1; i >= 0; i--) { var b = d.artLayers[i].bounds; if (px(b[2]) - px(b[0]) > 0) { src = d.artLayers[i]; break; } }
+    }
     var c = src.duplicate(); c.name = name; c.move(src, ElementPlacement.PLACEBEFORE); return c;
   }
 
@@ -44,6 +48,7 @@ var FRT = (function () {
     if (o.leading) { ti.useAutoLeading = false; ti.leading = new UnitValue(o.leading, "px"); }
     var c = new SolidColor(); c.rgb.red = o.rgb[0]; c.rgb.green = o.rgb[1]; c.rgb.blue = o.rgb[2]; ti.color = c;
     if (o.align === "right") ti.justification = Justification.RIGHT;
+    if (o.align === "center") ti.justification = Justification.CENTER;
     ti.position = [new UnitValue(o.x, "px"), new UnitValue(o.baseline, "px")];
     return L;
   }
@@ -108,6 +113,30 @@ var FRT = (function () {
     return so.name + " blur=" + radius + " noise=" + (noisePct || 0) + "%";
   }
 
+  // Batch: open a render, save its working PSD, and apply a plan from scripts/batch_align.py (or the reference plan).
+  // Returns a one-line report. The original file is never modified.
+  function applyPlanFile(inputPath, planPath, psdPath, snapPath) {
+    var f = new File(planPath); f.encoding = "UTF-8"; f.open("r"); var plan = eval("(" + f.read() + ")"); f.close();
+    var d = app.open(new File(inputPath));
+    var o = new PhotoshopSaveOptions(); o.layers = true; d.saveAs(new File(psdPath), o, false, Extension.LOWERCASE);
+    d.artLayers[d.artLayers.length - 1].name = "Original (AI render)";
+    for (var i = 0; i < plan.cleanup.length; i++) {
+      var c = plan.cleanup[i];
+      cleanup(c.polys, { layer: "Text cleanup", radius: c.radius, passes: c.passes, feather: c.feather, noise: c.noise, blur: c.blur });
+    }
+    for (var j = 0; j < plan.lines.length; j++) {
+      var L = plan.lines[j];
+      addTextSkewed({ name: L.name, text: L.text, x: L.x, baseline: L.baseline, angle: L.angle, rgb: L.rgb, font: L.font, size: L.size, hscale: L.hscale, align: L.align });
+      if (plan.liveRefresh) { app.refresh(); $.sleep(plan.liveRefresh); }
+    }
+    groupTextLayers(plan.group);
+    var g = d.layerSets.getByName(plan.group); g.move(d.layers[0], ElementPlacement.PLACEBEFORE);
+    if (plan.soften) softenGroup(plan.group, plan.soften.radius, plan.soften.noise);
+    d.save(); if (snapPath) snapshot(snapPath);
+    var nm = d.name; d.close(SaveOptions.DONOTSAVECHANGES);
+    return nm + ": " + plan.lines.length + " lines, " + plan.cleanup.length + " cleanup passes";
+  }
+
   function groupTextLayers(name) {
     var d = doc(), g; try { g = d.layerSets.getByName(name); } catch (e) { g = d.layerSets.add(); g.name = name; }
     var n = 0; for (var i = d.artLayers.length - 1; i >= 0; i--) { var l = d.artLayers[i]; if (l.kind == LayerKind.TEXT) { l.move(g, ElementPlacement.INSIDE); n++; } }
@@ -125,5 +154,5 @@ var FRT = (function () {
   }
 
   return { ensureCleanupLayer: ensureCleanupLayer, band: band, cleanup: cleanup, addTextRotated: addTextRotated,
-           addTextSkewed: addTextSkewed, groupTextLayers: groupTextLayers, softenGroup: softenGroup, snapshot: snapshot };
+           addTextSkewed: addTextSkewed, groupTextLayers: groupTextLayers, softenGroup: softenGroup, applyPlanFile: applyPlanFile, snapshot: snapshot };
 })();

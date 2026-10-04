@@ -24,3 +24,18 @@
 - Firefly output arrives as a **smart object layer**, so the duplicated cleanup layer is a smart object too, and the median and noise become smart filters (fine, still non-destructive).
 - Converting the text group to a smart object flipped other layers' visibility. `softenGroup` now records and restores visibility. Always snapshot and look after any smart object conversion.
 - Skew helper: anchoring by bounds made lines without descenders sit off their baseline. It now corrects with dy = −(x − cx)·tan(angle), which is exact.
+
+## No tech pack and batch tests (MOSSBLOOM)
+- **No tech pack, production:** fact flagging caught "repair" and "fragrance free" (claims), "30 mL" (spec) and a stray "2" inside garbled directions (a hidden dose). The user answered 5 questions from one numbered crop sheet in shorthand ("1a, 2c, keep 3–5, production"). Suggested directions left out the dose ("a few drops"). Ingredients became lorem ipsum filler, named `[PLACEHOLDER]` and listed as an open item in the change log.
+- **Batch:** 3 colorways (sage reference, plum, blue reframed by 6% scale, −1.2° rotation and a shift). `batch_align.py` recovered the transform with about 1.35 px median error. All three were fixed by `FRT.applyPlanFile` in one Photoshop call, about 2 minutes total.
+- Recolored variants also shift the *text* color, so re-sample ink per image (`color_box`). Don't reuse the reference RGB.
+- Proofread changed lines only. Untouched low-contrast lines can misread (see SKILL step 9.4).
+
+## QUELLMOOR (fictional brand): no tech pack, then a batch of 4 colorways
+- Firefly invented **facts** on the side panel: "Water Temperature −50 °F", "13 g…", "'3 min". The detector read "−50 °F" as "-SF", so `flag_facts` missed it. **Always read small spec panels by eye** too. Fixed with standard brewing guidance the user approved (212 °F, 3–5 min, 2.5 g per cup), logged as such.
+- Above and below the horizon, the same panel slopes opposite ways (+3° in the brewing guide, −6° to −12° in the tasting notes). Measure each block.
+- Centered paragraphs: `addTextSkewed({..., align:"center", x: panel centre})`.
+- Firefly documents have an empty "Layer 0" under the image. `ensureCleanupLayer` now picks "Original (AI render)" or the lowest layer with pixels.
+- **On-camera batch:** open all renders, `app.runMenuItem(stringIDToTypeID("tile"))`, then fit each window (`FtOn` per document) and apply plans to the *open* documents so each tile updates live. 4 renders × 13 lines took about 80 s.
+- The MCP call timed out client-side (about 60 s) while Photoshop kept working. Watch the output files instead of retrying.
+- **Proofreading 19 px text after softening is unreliable** (lines missed or misread, e.g. "25g percup"). Use the before/after sheet as the check for tiny text. proofread.py's "found" can then point at an unrelated line, so read CHECK rows with that in mind.

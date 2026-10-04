@@ -66,7 +66,16 @@ Also include:
 - **Layout differences from the source**, for example two lines in the render where the source has one. Flag them as a decision for the user.
 - **Correct text:** list it as "keep" so the user sees that it was checked.
 
+**Tools for this step:**
+- `python3 scripts/flag_facts.py detected.json [proposed.json]` tags numbers, specs, claims, legal marks, contact details and codes, in both the render text and your proposals. Every flagged line goes to the user.
+- `uv run --with pillow python scripts/question_sheet.py flat.png detected.json questions.jpg 8-13,15-24,3,5` makes **one** numbered crop sheet for everything you need the user to decide. Use ranges to ask about a whole paragraph as one question. Send it with a short table of options, so the user can answer in shorthand ("1a, 2c, keep 3–5").
+
 **Without a source of truth,** infer intended text from the correct words nearby, icons and graphics, word shapes (keep the same word count, lengths and capitalization so the copy fits the space), category conventions and the product type. If the product looks real, ask whether to look up its official copy.
+
+**No-source answers, applied (tested on MOSSBLOOM 2026-10-04):**
+- **Suggested copy** for unknown paragraphs: write it to fit the context and the space, and leave out numbers, doses, claims and facts the user hasn't given ("apply a few drops", not "apply 2–3 drops"). Use it only after approval.
+- **Filler** means classic *lorem ipsum*, wrapped to the render's line length. It's obviously a placeholder to designers, which is the point. Name its layers `… [PLACEHOLDER]`.
+- **Production mode:** the change log gets a **Source** column for every line (render, tech pack, user-confirmed, Claude-suggested and approved, PLACEHOLDER) and an **Open items** list, so nothing unverified slips into print.
 
 ### 4. Measure
 Make region boxes from the detected quads, padded by about 10 px and one box per line, then run:
@@ -129,11 +138,18 @@ Every approved line should score at least 0.9. Low scores on tiny or steep text 
   - what to check by eye, such as small or steep labels, and new type that's crisper than a soft render (a 0.3–0.5 px blur on the group helps but rasterizes);
   - actual usage against the estimate.
 
-### 9. Batches and variants
-- Get the first image fully approved. That sets the font, colors, cleanup radius and approved wording.
-- Reuse those settings on the other images and their colorways. Variants usually share a layout, so measure and apply offsets instead of re-deriving everything.
-- Pause automatically only for: unknown text, factual or legal items, cleanup that leaves residue, or proofreading lines under 0.9.
-- End with one before-and-after sheet covering every image.
+### 9. Batches and variants (tested on 3 MOSSBLOOM colorways, 2026-10-04)
+1. **Fix the first image completely and get it approved.** Then write its **plan JSON**: cleanup polygons and settings, every text line (text, x, baseline, angle, size, hscale, font, rgb), group name, softening, a `color_box` around correct render lettering on the same face, `check_quads` (the replaced lines) and `keep` (correct lines near them). See the docstring in `scripts/batch_align.py`.
+2. **For each other image** (colorway, re-export, reframe):
+   ```
+   scripts/detect_text target.png > target_det.json
+   uv run --with pillow --with numpy --with opencv-python-headless python scripts/batch_align.py ref.png plan.json target.png target_plan.json --det target_det.json
+   ```
+   It finds scale, rotation and shift (ORB plus RANSAC, typically about 1 px error), moves every polygon and line, scales size and radius, adds the rotation to each angle, and re-samples the ink color for that colorway. It reports **NEEDS REVIEW** for detected text in the fix area that the plan doesn't cover, which happens when the AI rendered different words on that variant. Exit code 2 means alignment failed, so treat that image as its own reference job.
+3. **Apply in Photoshop**, one call per image: `FRT.applyPlanFile(input.png, plan.json, out_TEXTFIX.psd, snapshot.png)`. That covers the working PSD, cleanup, type, group and softening, and closes the file.
+4. **Proofread only the lines you changed** for each image. Detection can misread untouched lines on low-contrast colorways (mint on teal read "DEW BARRIER" as "BAI"), so check those by eye on the sheet.
+5. **One before/after sheet** for the whole batch: original crop, fixed crop and full fixed image per row.
+6. **Pause only for:** NEEDS REVIEW lines, failed alignment, cleanup residue, or changed lines scoring under 0.9.
 
 ## Notes from real jobs
 See `reference/lessons.md`.

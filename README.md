@@ -12,6 +12,16 @@ A Claude Code skill that fixes the garbled, made-up text AI image generators put
 3. **Use it:** open your render in Photoshop and your tech pack in Illustrator, then say:
    > *"Fix the text in this render. Check it against the tech pack."*
 
+## Three ways to use it
+
+| Mode | When | What happens |
+|---|---|---|
+| **With a tech pack** | You have the approved copy (Illustrator `.ai` with live or outlined text, a PDF, or a copy doc) | Claude compares every line of the render against it, shows you a table of fixes to approve, then fixes the render in Photoshop. |
+| **No tech pack** | There's nothing to check against | Claude keeps what's already right, **flags every fact** (temperatures, times, amounts, claims, legal marks) and asks you in **one numbered sheet** instead of guessing. It can suggest wording, but never invents numbers. In production mode, every line in the change log gets a source. |
+| **Batch** (colorways, re-exports) | A range of renders of the same product | Fix and approve the first one. Claude carries the fix to the rest, **aligning automatically** even if a render was cropped, scaled or rotated differently, and re-samples each colorway's print color. You get a layered PSD and a change log per render, plus one before/after sheet. |
+
+Batch mode also uses OpenCV for alignment. `uv` installs it on the fly, so there's nothing extra to set up.
+
 ## What you need
 
 | What | Why | Cost |
