@@ -4,7 +4,7 @@ A Claude Code skill that fixes the garbled, made-up text AI image generators put
 
 ## Quick start (no coding needed)
 
-1. **Install the skill:** download this repository (green **Code** button → **Download ZIP**) and unzip it. **Rename the folder from `claude-fix-render-text-main` to `fix-render-text`** (this exact name matters) and put it in `~/.claude/skills/`. Create that folder if it doesn't exist.
+1. **Install the skill:** download **[fix-render-text.zip](https://github.com/jvargas718/claude-fix-render-text/releases/latest/download/fix-render-text.zip)**, unzip it, and move the `fix-render-text` folder into `~/.claude/skills/`. Create that folder if it doesn't exist. No renaming needed.
 2. **Open Claude Code** (the desktop app's Code tab works) and say:
    > *"Set up the fix-render-text skill. Install what it needs."*
 
@@ -74,6 +74,9 @@ Fully quit and reopen Claude. Allow macOS's **Automation** prompts, and **Screen
 - Your original render is never changed. You get a layered PSD next to it, with the corrected text, a cleanup layer and the untouched original.
 - Claude never invents specs, claims or legal marks. Anything it can't verify against your source is flagged for you to decide.
 - Tested on macOS with Photoshop 2026 and Illustrator 2026.
+
+## Updates
+New versions are published as [releases](https://github.com/jvargas718/claude-fix-render-text/releases). The link above always downloads the latest. To update, replace your `fix-render-text` folder with the new one.
 
 ## Support
 Shared as is, for free. Issues and suggestions are welcome in the **Issues** tab, and I'll reply when I can. Adobe updates or new versions of the servers can occasionally break a step. If something stops working, an issue with your macOS, Photoshop and Illustrator versions helps a lot.
