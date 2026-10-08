@@ -15,7 +15,7 @@
 - The render split one line of the source copy over two lines with wrong values. Flag this kind of layout difference for the user instead of choosing silently.
 
 ## MOSSBLOOM demo (fictional brand: Firefly render plus a tech pack built in Illustrator)
-- **Illustrator special characters:** `—`-style escapes in the tool call arrive already decoded, and the illustrator server then reads the script as MacRoman, which gives "‚Äî". In Illustrator scripts **use `String.fromCharCode(0x2014)`**. (The Photoshop server handled `®` fine.)
+- **Illustrator special characters:** `\u2014`-style escapes in the tool call arrive already decoded, and the illustrator server then reads the script as MacRoman, which gives "‚Äî". In Illustrator scripts **use `String.fromCharCode(0x2014)`**. (The Photoshop server handled `\u00AE` fine.)
 - **Illustrator scripts that change many text frames, then save and export, can run past the server's 30-second limit.** The edits still apply. Split the work into small calls: edit, then save, then export. Check the state before retrying.
 - **Illustrator stops answering scripts when it's in the background**, probably App Nap. Running `open -a "Adobe Illustrator"` (the full app path) before each Illustrator call fixed it every time. Also: `cut` is a reserved global in Illustrator's JavaScript, so don't name a variable `cut`.
 - Text frames are slow to create. Cache `app.textFonts.getByName()` lookups and keep each call to about 10 frames or fewer.
